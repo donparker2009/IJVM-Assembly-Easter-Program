@@ -1,0 +1,384 @@
+//Don Parker
+
+.constant
+objref 0x40
+begin 1981
+end 2049
+.end-constant
+
+.main
+
+.var
+a
+b
+c
+d
+e
+year
+date
+.end-var
+
+	ldc_w objref
+	INVOKEVIRTUAL getnum
+	istore year
+	
+	ldc_w begin
+	iload year
+	isub
+	iflt check
+	bipush 68
+	bipush 73
+	bipush 76
+	bipush 65
+	bipush 86
+	bipush 78
+	bipush 73
+	OUT
+	OUT
+	OUT
+	OUT
+	OUT
+	OUT
+	OUT
+	halt
+
+check: iload year
+	ldc_w end
+	isub
+	iflt start
+	bipush 68
+	bipush 73
+	bipush 76
+	bipush 65
+	bipush 86
+	bipush 78
+	bipush 73
+	OUT
+	OUT
+	OUT
+	OUT
+	OUT
+	OUT
+	OUT
+	halt
+
+	 //a
+start: ldc_w objref
+	iload year
+	bipush 19
+	invokevirtual irem
+	istore a
+	
+	//b
+	ldc_w objref
+	iload year
+	bipush 4
+	invokevirtual irem
+	istore b
+
+	//c
+	ldc_w objref
+	iload year
+	bipush 7
+	invokevirtual irem
+	istore c
+	
+	//d
+	ldc_w objref
+	iload a
+	bipush 19
+	invokevirtual imul
+	istore d
+	iload d
+	bipush 24
+	iadd
+	istore d
+	ldc_w objref
+	iload d
+	bipush 30
+	invokevirtual irem
+	istore d
+	
+	//e
+	ldc_w objref
+	iload b
+	bipush 2
+	invokevirtual imul
+	istore e
+	ldc_w objref
+	iload c
+	bipush 4
+	invokevirtual imul
+	iload e
+	iadd
+	istore e
+	ldc_w objref
+	iload d
+	bipush 6
+	invokevirtual imul
+	iload e
+	iadd
+	istore e
+	iload e
+	bipush 5
+	iadd
+	istore e
+	ldc_w objref
+	iload e
+	bipush 7
+	invokevirtual irem
+	istore e
+
+	//date
+	bipush 22
+	iload d
+	iadd
+	istore date
+	iload date
+	iload e
+	iadd
+	istore date
+	
+
+	//print date stuff here
+
+march: bipush 31
+	iload date
+	isub
+	iflt april
+	ldc_w objref
+	bipush 3
+	invokevirtual print
+	bipush 47
+	OUT
+	ldc_w objref
+	iload date
+	invokevirtual print
+	bipush 47
+	OUT
+	ldc_w objref
+	iload year
+	invokevirtual print
+	goto done
+	
+
+april: ldc_w objref
+	bipush 4
+	invokevirtual print
+	bipush 47
+	OUT
+	ldc_w objref
+	iload date
+	bipush 31
+	isub
+	invokevirtual print
+	bipush 47
+	OUT
+	ldc_w objref
+	iload year
+	invokevirtual print
+done:	halt
+
+.end-main
+
+.method getnum()
+
+.var
+total
+num
+.end-var
+
+	bipush 0
+	istore total
+rep:	NOP
+rep2:	IN
+	DUP
+	bipush 0xA
+	if_icmpeq done
+	dup
+	ifeq clear
+	bipush 0x30
+	isub
+	istore num
+	ldc_w objref
+	iload total
+	bipush 10
+	INVOKEVIRTUAL imul
+	istore total
+	iload total
+	iload num
+	iadd
+	istore total
+	goto rep
+clear: pop
+	goto rep2
+done: iload total
+	ireturn
+	
+
+.end-method
+
+.method print(num)
+.var
+a
+count
+.end-var
+	iload num
+	ISTORE 	a
+	BIPUSH	0
+	ISTORE 	count
+stack: LDC_W	objref
+	ILOAD		a
+	BIPUSH	10
+	INVOKEVIRTUAL	irem
+	ILOAD 	count
+	BIPUSH	1
+	IADD
+	ISTORE	count
+	LDC_W		objref
+	ILOAD		a
+	BIPUSH	10
+	INVOKEVIRTUAL idiv
+	DUP
+	ISTORE	a
+	IFEQ		prs
+	GOTO		stack
+prs: ILOAD		count
+	IFEQ		done
+	//convert and print
+	BIPUSH 0x30
+	IADD
+	OUT
+	ILOAD		count
+	BIPUSH	1
+	ISUB
+	ISTORE	count
+	GOTO 		prs
+done:	BIPUSH	0
+	IRETURN
+.end-method
+
+
+.method imul(a,b)
+.var
+p
+.end-var
+	bipush 0
+	istore p
+im1:	iload b
+	dup
+	ifeq im2
+	bipush 1 //check lsb
+	iand
+	ifeq im3 //jump over add
+	iload p
+	iload a
+	iadd
+	istore p
+im3:	iload a //shift
+	ishl
+	istore a
+	iload b
+	ishr
+	istore b
+	goto im1
+im2:	pop
+	iload p
+	ireturn
+.end-method
+
+.method idiv(r,d)
+
+.var
+q
+loop
+.end-var
+	
+id0:	bipush 17
+	istore loop
+	bipush 0
+	istore q
+	iload d
+	ishl16
+	istore d
+id1:	iload r
+	iload d
+	isub
+	istore r
+	iload r
+	iflt id2b
+	iload q
+	ishl
+	bipush 1
+	iadd
+	istore q
+id3:	iload d
+	ishr
+	istore d
+	iload loop
+	bipush 1
+	isub
+	istore loop
+	iload loop
+	ifeq done
+	goto id1
+id2b:	iload r
+	iload d
+	iadd
+	istore r
+	iload q
+	ishl
+	istore q
+	goto id3
+done:	iload q
+	ireturn
+
+.end-method
+	
+.method irem(r,d)
+
+.var
+q
+loop
+.end-var
+	
+id0:	bipush 17
+	istore loop
+	bipush 0
+	istore q
+	iload d
+	ishl16
+	istore d
+id1:	iload r
+	iload d
+	isub
+	istore r
+	iload r
+	iflt id2b
+	iload q
+	ishl
+	bipush 1
+	iadd
+	istore q
+id3:	iload d
+	ishr
+	istore d
+	iload loop
+	bipush 1
+	isub
+	istore loop
+	iload loop
+	ifeq done
+	goto id1
+id2b:	iload r
+	iload d
+	iadd
+	istore r
+	iload q
+	ishl
+	istore q
+	goto id3
+done:	iload r
+	ireturn
+
+.end-method
